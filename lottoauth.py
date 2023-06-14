@@ -24,7 +24,7 @@ class LottoAuth:
         randint = random.randint(29, 88)
         time.sleep(randint)
 
-    def logout(self) -> object:
+    def logout(self) -> None:
         self.driver.get('https://www.illinoislottery.com/account/profile')
         self.driver.find_element(By.XPATH, '//*[@id="il-web-app"]/div[4]/div/section/div/div[1]/div/section[7]/form/button').click()
         self.driver.close()
