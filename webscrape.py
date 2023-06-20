@@ -14,25 +14,25 @@ def scrape():
     for i in reversed(range(10)):
         url: str = f'https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}'
         driver.get(url)
-        day_of_week: str = str(get_day_of_week(driver))
         date = get_date(driver)
+        day_of_week: str = str(get_day_of_week(driver))
         time_of_day = get_time_of_day(driver)
-        first_ball = get_first(driver)
+        first = get_first(driver)
         second = get_second(driver)
         third = get_third(driver)
         fourth = get_fourth(driver)
         fifth = get_fifth(driver)
 
         print_stuff(date, day_of_week, time_of_day)
-        print_balls(first_ball, second, third, fourth, fifth)
+        print_balls(first, second, third, fourth, fifth)
         page = page - 1
         table_name = 'lotto_numbers'
         time.sleep(random.randint(2, 6))
-        sql_one = "INSERT INTO lotto_numbers (date, day_of_week, time_of_day, first_ball, second, third, fourth, fifth"
-        sql_two: str = f"VALUES {date}, {day_of_week}, {time_of_day}, {first_ball}, {second}, {third}, {fourth}, {fifth};"
+        sql_one = f'INSERT INTO {table_name} (date, day_of_week, time_of_day, first, second, third, fourth, fifth)'
+        sql_two: str = f"VALUES {date}, {day_of_week}, {time_of_day}, {first}, {second}, {third}, {fourth}, {fifth};"
         sql_insert: str = sql_one + sql_two
 
-        connection = sqlite3.connect('lotto_numbers.db')
+        connection = sqlite3.connect('lotto_numbers')
         cursor = connection.cursor()
         cursor.execute(sql_insert)
         connection.commit()
@@ -45,7 +45,7 @@ def get_date(driver):
 
 
 def get_day_of_week(driver):
-    day_of_week = driver.find_element(By.XPATH, '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[4]')
+    day_of_week = driver.find_element(By.XPATH, '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[1]')
     return str(day_of_week.text)
 
 
@@ -60,32 +60,32 @@ def get_time_of_day(driver):
 
 def get_first(driver):
     first = driver.find_element(By.ID, "result-line-primary-0-selected")
-    return first.text
+    return str(first.text)
 
 
 def get_second(driver):
     second = driver.find_element(By.ID, 'result-line-primary-1-selected')
-    return second.text
+    return str(second.text)
 
 
 def get_third(driver):
     third = driver.find_element(By.ID, 'result-line-primary-2-selected')
-    return third.text
+    return str(third.text)
 
 
 def get_fourth(driver):
     fourth = driver.find_element(By.ID, "result-line-primary-3-selected")
-    return fourth.text
+    return str(fourth.text)
 
 
 def get_fifth(driver):
     fifth = driver.find_element(By.ID, "result-line-primary-4-selected")
-    return fifth.text
+    return str(fifth.text)
 
 
 def print_stuff(date, day_of_week, time_of_day):
-    print("Day of the week: ", day_of_week)
     print("Date: ", date)
+    print("Day of the week: ", day_of_week)
     print("Time of day: ", time_of_day)
 
 
