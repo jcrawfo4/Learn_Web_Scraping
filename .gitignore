@@ -1,3 +1,10 @@
 **.xml
 webpage.html
 *.db
+venv
+lotto
+
+ENV_DIR
+*.iml
+*.xml
+.idea

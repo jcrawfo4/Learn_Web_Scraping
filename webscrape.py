@@ -10,12 +10,12 @@ def scrape():
     page = 13444
     driver = uc.Chrome()
     table_name = 'lotto_numbers'
-    create_table(table_name, )
+    create_table(table_name)
     for i in reversed(range(10)):
         url: str = f'https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}'
         driver.get(url)
         date = get_date(driver)
-        day_of_week: str = str(get_day_of_week(driver))
+        day_of_week = get_day_of_week(driver)
         time_of_day = get_time_of_day(driver)
         first = get_first(driver)
         second = get_second(driver)
@@ -26,15 +26,14 @@ def scrape():
         print_stuff(date, day_of_week, time_of_day)
         print_balls(first, second, third, fourth, fifth)
         page = page - 1
-        table_name = 'lotto_numbers'
-        time.sleep(random.randint(2, 6))
-        sql_one = f'INSERT INTO {table_name} (date, day_of_week, time_of_day, first, second, third, fourth, fifth)'
-        sql_two: str = f"VALUES {date}, {day_of_week}, {time_of_day}, {first}, {second}, {third}, {fourth}, {fifth};"
-        sql_insert: str = sql_one + sql_two
+        time.sleep(random.randint(1, 6))
+        sql = f'''INSERT INTO {table_name} ('date', 'day_of_week', 'time_of_day', 'first', 'second',
+        'third', 'fourth', 'fifth') VALUES (?, ?, ?, ?, ?, ?, ?, ?);'''
+        param_list = [(date, day_of_week, time_of_day, first, second, third, fourth, fifth)]
 
-        connection = sqlite3.connect('lotto_numbers')
+        connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         cursor = connection.cursor()
-        cursor.execute(sql_insert)
+        cursor.executemany(sql, param_list)
         connection.commit()
 
 
@@ -84,23 +83,23 @@ def get_fifth(driver):
 
 
 def print_stuff(date, day_of_week, time_of_day):
-    print("Date: ", date)
-    print("Day of the week: ", day_of_week)
-    print("Time of day: ", time_of_day)
+    print("Date: " + date)
+    print("Day of the week: " + day_of_week)
+    print("Time of day: " + time_of_day)
 
 
 def print_balls(first, second, third, fourth, fifth):
-    print("First: ", first)
-    print("Second: ", second)
-    print("Third: ", third)
-    print("Fourth: ", fourth)
-    print("Fifth: ", fifth)
+    print("First: " + first)
+    print("Second: " + second)
+    print("Third: " + third)
+    print("Fourth: " + fourth)
+    print("Fifth: " + fifth)
 
 
 def create_table(table_name):
-    sql = f''' CREATE TABLE IF NOT EXISTS lotto_numbers (
-                    id integer PRIMARY KEY,
-                    date text NOT NULL,
+    connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+    sql_table = f''' CREATE TABLE IF NOT EXISTS {table_name} (
+                    date timestamp NOT NULL,
                     day_of_week text NOT NULL,
                     time_of_day text NOT NULL,
                     first integer NOT NULL,
@@ -109,9 +108,8 @@ def create_table(table_name):
                     fourth integer NOT NULL,
                     fifth integer NOT NULL
                 ); '''
-    connection = sqlite3.connect('lotto_numbers.db')
     cursor = connection.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql_table)
 
 
 # def make_entry(date, day_of_week, time_of_day, first, second, third, fourth, fifth):
@@ -119,7 +117,7 @@ def create_table(table_name):
 #     sql_insert = ''' INSERT INTO $table_name(date, day_of_week, time_of_day, first, second, third, fourth, fifth)
 #                   VALUES(?, ?, ?, ?, ?, ?, ?, ?);'''
 #     data_tuple = (date, day_of_week, time_of_day, first, second, third, fourth, fifth)
-#     connection = sqlite3.connect('lotto_numbers.db')
+#     connection = sqlite3.connect('lotto_numbers.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
 #     cursor = connection.cursor()
 #     cursor.execute(sql_insert, data_tuple)
 #     return cursor.lastrowid
