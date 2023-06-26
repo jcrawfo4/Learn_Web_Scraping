@@ -8,3 +8,5 @@ ENV_DIR
 *.iml
 *.xml
 .idea
+lotto_numbers
+__pycache__/

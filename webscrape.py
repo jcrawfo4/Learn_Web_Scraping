@@ -1,4 +1,3 @@
-import random
 import sqlite3
 import time
 
@@ -8,27 +7,22 @@ from selenium.webdriver.common.by import By
 
 class WebScrape:
     def __init__(self):
+        self.table_name = 'lotto_numbers'
         self.chromeOptions = uc.ChromeOptions().add_argument('--headless')
         self.driver = uc.Chrome()
 
-    def daily_scrape(self, date, day_of_week, time_of_day, first, second, third, fourth, fifth):
-        table_name = 'lotto_numbers'
-        self.create_table(table_name)
-        connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
-        cursor = connection.cursor()
-        sql = f'''INSERT INTO {table_name} ('date', 'day_of_week', 'time_of_day', 'first', 'second',
-        'third', 'fourth', 'fifth') VALUES (?, ?, ?, ?, ?, ?, ?, ?);'''
-        param_list = [(date, day_of_week, time_of_day, first, second, third, fourth, fifth)]
-        cursor.executemany(sql, param_list)
-        connection.commit()
-    def scrape_all_time(self):
-        page = 13444
-        driver = uc.Chrome()
-        table_name = 'lotto_numbers'
-        self.create_table(table_name)
-        connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
-        cursor = connection.cursor()
-        for i in reversed(range(100)):
+    def countdown(self):
+        print("stopped countdown()")
+        self.daily_scrape()
+
+    def daily_scrape(self):
+        try:
+            table_name = 'lotto_numbers'
+            driver = uc.Chrome()
+            connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+            cursor = connection.cursor()
+            page = self.get_last_page()
+            time.sleep(5)
             url: str = f'https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}'
             driver.get(url)
             date = self.get_date(driver)
@@ -39,17 +33,27 @@ class WebScrape:
             third = self.get_third(driver)
             fourth = self.get_fourth(driver)
             fifth = self.get_fifth(driver)
-
-            self.print_stuff(date, day_of_week, time_of_day)
-            self.print_balls(first, second, third, fourth, fifth)
-            time.sleep(random.randint(1, 6))
-            sql = f'''INSERT INTO {table_name} ('date', 'day_of_week', 'time_of_day', 'first', 'second',
-            'third', 'fourth', 'fifth') VALUES (?, ?, ?, ?, ?, ?, ?, ?);'''
-            param_list = [(date, day_of_week, time_of_day, first, second, third, fourth, fifth)]
+            sql = f'''INSERT INTO {table_name} ('page', 'date', 'day_of_week', 'time_of_day', 'first', 'second',
+            'third', 'fourth', 'fifth') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'''
+            param_list = [(page, date, day_of_week, time_of_day, first, second, third, fourth, fifth)]
             cursor.executemany(sql, param_list)
-
             connection.commit()
-            page = page - 1
+            connection.close()
+        except sqlite3.IntegrityError:
+            print("IntegrityError")
+
+    def get_last_page(self):
+        try:
+            page_query = f'''SELECT MAX(page) FROM {self.table_name}'''
+            connection = sqlite3.connect('lotto_numbers', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+            cursor = connection.cursor()
+            page = cursor.execute(page_query).fetchone()[0]
+            print("page: ", page)
+            connection.commit()
+            connection.close()
+            return page
+        except sqlite3.OperationalError:
+            print("OperationalError page not found")
 
     def get_date(self, driver):
         date = driver.find_element(By.XPATH,
@@ -89,56 +93,37 @@ class WebScrape:
         fifth = driver.find_element(By.ID, "result-line-primary-4-selected")
         return str(fifth.text)
 
-    def print_stuff(self, date, day_of_week, time_of_day):
-        print("Date: " + date)
-        print("Day of the week: " + day_of_week)
-        print("Time of day: " + time_of_day)
-
-    def print_balls(self, first, second, third, fourth, fifth):
-        print("First: " + first)
-        print("Second: " + second)
-        print("Third: " + third)
-        print("Fourth: " + fourth)
-        print("Fifth: " + fifth)
-
-    def create_table(self, table_name):
-        connection = sqlite3.connect(table_name)
-        sql_table = f''' CREATE TABLE IF NOT EXISTS {table_name} (
-                        date text NOT NULL,
-                        day_of_week text NOT NULL,
-                        time_of_day text NOT NULL,
-                        first integer NOT NULL,
-                        second integer NOT NULL,
-                        third integer NOT NULL,
-                        fourth integer NOT NULL,
-                        fifth integer NOT NULL
-                    ); '''
-        cursor = connection.cursor()
-        cursor.execute(sql_table)
-
-    # def make_entry(self, table_name, page, date, day_of_week, time_of_day, first, second, third, fourth, fifth):
-    #     sql = f'''INSERT INTO {table_name} ('page','date', 'day_of_week', 'time_of_day', 'first', 'second',
-    #     'third', 'fourth', 'fifth') VALUES (?,?, ?, ?, ?, ?, ?, ?, ?);'''
-    #     param_list = [(page, date, day_of_week, time_of_day, first, second, third, fourth, fifth)]
-    #     return sql, param_list
-
-    def close_connection(self, conn):
-        conn.close()
+    # def print_stuff(self, date, day_of_week, time_of_day):
+    #     print("Date: " + date)
+    #     print("Day of the week: " + day_of_week)
+    #     print("Time of day: " + time_of_day)
+    #
+    # def print_balls(self, first, second, third, fourth, fifth):
+    #     print("First: " + first)
+    #     print("Second: " + second)
+    #     print("Third: " + third)
+    #     print("Fourth: " + fourth)
+    #     print("Fifth: " + fifth)
 
     def get_all_entries(self, table_name):
         connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         cur = connection.cursor()
-        cur.execute(f'SELECT * FROM {table_name} limit 10')
+        cur.execute(f'SELECT * FROM {table_name} limit 7')
         rows = cur.fetchall()
+        print("calling get_all_entries")
         for row in rows:
             print(row)
+        connection.close()
 
     # scrape_all_time() scrapes all the pages from the website and stores them in a database
 
 
 def main():
     scraper = WebScrape()
-    scraper.scrape_all_time()
+    # scraper.scrape_all_time()
+    # scraper.get_last_page()
+    scraper.countdown()
+    scraper.get_all_entries('lotto_numbers')
 
 
 if __name__ == '__main__':
