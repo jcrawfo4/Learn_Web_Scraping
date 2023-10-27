@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 class LottoAuth:
     def __init__(self):
         self.username = "CheekTeam@yahoo.com"
-        self.password = "DontHackMeBro!"
+        self.password = "CheekTeam1!"
         self.uname = None
         self.pword = None
         self.chromeOptions = uc.ChromeOptions().add_argument('--headless')

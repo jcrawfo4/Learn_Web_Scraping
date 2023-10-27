@@ -1,3 +1,4 @@
+import random
 import sqlite3
 import time
 
@@ -6,41 +7,40 @@ from selenium.webdriver.common.by import By
 
 
 class WebScrape:
-    def __init__(self):
-        self.table_name = 'lotto_numbers'
-        self.chromeOptions = uc.ChromeOptions().add_argument('--headless')
-        self.driver = uc.Chrome()
 
-    def countdown(self):
-        print("stopped countdown()")
-        self.daily_scrape()
+    def __init__(self):
+        self.chromeOptions = uc.ChromeOptions().add_argument('--headless')
+        self.driver = uc.Chrome(headless=True, use_subprocess=False)
+        self.table_name = 'lotto_numbers'
 
     def daily_scrape(self):
-        try:
-            table_name = 'lotto_numbers'
-            driver = uc.Chrome()
-            connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
-            cursor = connection.cursor()
-            page = self.get_last_page()
-            time.sleep(5)
-            url: str = f'https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}'
-            driver.get(url)
-            date = self.get_date(driver)
-            day_of_week = self.get_day_of_week(driver)
-            time_of_day = self.get_time_of_day(driver)
-            first = self.get_first(driver)
-            second = self.get_second(driver)
-            third = self.get_third(driver)
-            fourth = self.get_fourth(driver)
-            fifth = self.get_fifth(driver)
-            sql = f'''INSERT INTO {table_name} ('page', 'date', 'day_of_week', 'time_of_day', 'first', 'second',
-            'third', 'fourth', 'fifth') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'''
-            param_list = [(page, date, day_of_week, time_of_day, first, second, third, fourth, fifth)]
-            cursor.executemany(sql, param_list)
-            connection.commit()
-            connection.close()
-        except sqlite3.IntegrityError:
-            print("IntegrityError")
+
+        for page in range(14245, 14246):
+            try:
+                table_name = 'lotto_numbers'
+                connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+                cursor = connection.cursor()
+                # page = self.get_last_page()
+                time.sleep(random.randint(0, 3))
+                url: str = f'https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}'
+                self.driver.get(url)
+                date = self.get_date(self.driver)
+                day_of_week = self.get_day_of_week(self.driver)
+                time_of_day = self.get_time_of_day(self.driver)
+                first = self.get_first(self.driver)
+                second = self.get_second(self.driver)
+                third = self.get_third(self.driver)
+                fourth = self.get_fourth(self.driver)
+                fifth = self.get_fifth(self.driver)
+                sql = f'''INSERT INTO {table_name} ('page', 'date', 'day_of_week', 'time_of_day', 'first', 'second',
+                'third', 'fourth', 'fifth') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'''
+                param_list = [(page, date, day_of_week, time_of_day, first, second, third, fourth, fifth)]
+                cursor.executemany(sql, param_list)
+                # self.driver.quit()
+                connection.commit()
+                connection.close()
+            except sqlite3.IntegrityError:
+                print("IntegrityError")
 
     def get_last_page(self):
         try:
@@ -51,19 +51,23 @@ class WebScrape:
             print("page: ", page)
             connection.commit()
             connection.close()
-            return page
+            if page is None:
+                print("cursor.execute(page_query).fetchone()[0] FAILED !!!")
+                return
+            else:
+                return page
         except sqlite3.OperationalError:
             print("OperationalError page not found")
 
     def get_date(self, driver):
         date = driver.find_element(By.XPATH,
                                    '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[2]')
-        return str(date.text)
+        return str(date.text.strip()).strip()
 
     def get_day_of_week(self, driver):
         day_of_week = driver.find_element(By.XPATH, '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[1]')
-        day_of_week = str(day_of_week.text)[0:-1]
-        return day_of_week
+        day_of_week = str(day_of_week.text.strip())[0:-1]
+        return day_of_week.strip()
 
     def get_time_of_day(self, driver):
         time_of_day = driver.find_element(By.CSS_SELECTOR,
@@ -71,15 +75,15 @@ class WebScrape:
                                           'div.exc-container.exc-container__body.exc-container--with-bottom-margin.book'
                                           '-container__content > div > section > div > time > '
                                           'span.dbg-result-details__draw-phase')
-        return str(time_of_day.text)
+        return str(time_of_day.text.strip()).strip()
 
     def get_first(self, driver):
         first = driver.find_element(By.ID, "result-line-primary-0-selected")
-        return str(first.text)
+        return str(first.text).strip()
 
     def get_second(self, driver):
         second = driver.find_element(By.ID, 'result-line-primary-1-selected')
-        return str(second.text)
+        return str(second.text).strip()
 
     def get_third(self, driver):
         third = driver.find_element(By.ID, 'result-line-primary-2-selected')
@@ -93,37 +97,34 @@ class WebScrape:
         fifth = driver.find_element(By.ID, "result-line-primary-4-selected")
         return str(fifth.text)
 
-    # def print_stuff(self, date, day_of_week, time_of_day):
-    #     print("Date: " + date)
-    #     print("Day of the week: " + day_of_week)
-    #     print("Time of day: " + time_of_day)
-    #
-    # def print_balls(self, first, second, third, fourth, fifth):
-    #     print("First: " + first)
-    #     print("Second: " + second)
-    #     print("Third: " + third)
-    #     print("Fourth: " + fourth)
-    #     print("Fifth: " + fifth)
+    def print_stuff(self, date, day_of_week, time_of_day):
+        print("Date: " + date)
+        print("Day of the week: " + day_of_week)
+        print("Time of day: " + time_of_day)
 
-    def get_all_entries(self, table_name):
-        connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
-        cur = connection.cursor()
-        cur.execute(f'SELECT * FROM {table_name} limit 7')
-        rows = cur.fetchall()
-        print("calling get_all_entries")
-        for row in rows:
-            print(row)
-        connection.close()
+    def print_balls(self, first, second, third, fourth, fifth):
+        print("First: " + first)
+        print("Second: " + second)
+        print("Third: " + third)
+        print("Fourth: " + fourth)
+        print("Fifth: " + fifth)
+
+    # def get_all_entries(self, table_name):
+    #     connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+    #     cur = connection.cursor()
+    #     cur.execute(f'SELECT * FROM {table_name} limit 7')
+    #     rows = cur.fetchall()
+    #     print("calling get_all_entries")
+    #     for row in rows:
+    #         print(row)
+    #     connection.close()
 
     # scrape_all_time() scrapes all the pages from the website and stores them in a database
 
 
 def main():
     scraper = WebScrape()
-    # scraper.scrape_all_time()
-    # scraper.get_last_page()
-    scraper.countdown()
-    scraper.get_all_entries('lotto_numbers')
+    scraper.daily_scrape()
 
 
 if __name__ == '__main__':
