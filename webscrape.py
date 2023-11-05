@@ -15,10 +15,10 @@ class WebScrape:
 
     def daily_scrape(self):
 
-        for page in range(14245, 14246):
+        for page in range(14249, 142560):
             try:
                 table_name = 'lotto_numbers'
-                connection = sqlite3.connect(table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+                connection = sqlite3.connect(table_name, timeout=10, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
                 cursor = connection.cursor()
                 # page = self.get_last_page()
                 time.sleep(random.randint(0, 3))
@@ -39,6 +39,7 @@ class WebScrape:
                 # self.driver.quit()
                 connection.commit()
                 connection.close()
+
             except sqlite3.IntegrityError:
                 print("IntegrityError")
 

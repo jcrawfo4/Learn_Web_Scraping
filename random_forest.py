@@ -1,12 +1,9 @@
 # Data Processing
+import sqlite3
 import time
 
-import pandas as pd
 import numpy as np
-
-
-
-import sqlite3
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
 
@@ -22,6 +19,7 @@ class RandomForestClass:
     def print_last_draw(self):
         last_draw = self.df.tail(1)
         return last_draw
+
     def predict_fifth(self):
         fifth = self.df['fifth']
         X_5 = self.df[['first', 'second', 'third', 'fourth']]
@@ -76,7 +74,6 @@ class RandomForestClass:
         result = rf_classifier.predict(np.array(input_to_guess).reshape((1, -1)))[0]
         time.sleep(9)
         return result
-
 
 
 def main():
