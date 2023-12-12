@@ -1,30 +1,32 @@
 import random
 import sqlite3
 import time
-
-import undetected_chromedriver as uc
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from undetected_chromedriver import Chrome, ChromeOptions
 from selenium.webdriver.common.by import By
 
 
 class WebScrape:
 
     def __init__(self):
-        self.chromeOptions = uc.ChromeOptions().add_argument('--headless')
-        self.driver = uc.Chrome(headless=True, use_subprocess=False)
+        self.driver = Chrome(headless=True, use_subprocess=True)
         self.table_name = 'lotto_numbers'
+        self.wait = WebDriverWait(self.driver, 8)
 
     def daily_scrape(self):
 
-        for page in range(14249, 142560):
+        for page in range(14325, 14326):
             try:
                 table_name = 'lotto_numbers'
-                connection = sqlite3.connect(table_name, timeout=10, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+                connection = sqlite3.connect(table_name, timeout=10,
+                                             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
                 cursor = connection.cursor()
                 # page = self.get_last_page()
                 time.sleep(random.randint(0, 3))
-                url: str = f'https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}'
+                url = 'https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}'
                 self.driver.get(url)
-                date = self.get_date(self.driver)
+                date = self.get_date()
                 day_of_week = self.get_day_of_week(self.driver)
                 time_of_day = self.get_time_of_day(self.driver)
                 first = self.get_first(self.driver)
@@ -32,13 +34,13 @@ class WebScrape:
                 third = self.get_third(self.driver)
                 fourth = self.get_fourth(self.driver)
                 fifth = self.get_fifth(self.driver)
-                sql = f'''INSERT INTO {table_name} ('page', 'date', 'day_of_week', 'time_of_day', 'first', 'second',
+                sql = '''INSERT INTO {table_name} ('page', 'date', 'day_of_week', 'time_of_day', 'first', 'second',
                 'third', 'fourth', 'fifth') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'''
                 param_list = [(page, date, day_of_week, time_of_day, first, second, third, fourth, fifth)]
                 cursor.executemany(sql, param_list)
                 # self.driver.quit()
                 connection.commit()
-                connection.close()
+                # connection.close()
 
             except sqlite3.IntegrityError:
                 print("IntegrityError")
@@ -46,7 +48,8 @@ class WebScrape:
     def get_last_page(self):
         try:
             page_query = f'''SELECT MAX(page) FROM {self.table_name}'''
-            connection = sqlite3.connect('lotto_numbers', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+            connection = sqlite3.connect('../lotto_numbers',
+                                         detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
             cursor = connection.cursor()
             page = cursor.execute(page_query).fetchone()[0]
             print("page: ", page)
@@ -60,9 +63,9 @@ class WebScrape:
         except sqlite3.OperationalError:
             print("OperationalError page not found")
 
-    def get_date(self, driver):
-        date = driver.find_element(By.XPATH,
-                                   '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[2]')
+    def get_date(self) -> str:
+        date = self.wait.until(self.driver.find_element(By.XPATH, '//*[@id="il-web-app"]/div[2]/div['
+                                                                  '2]/div/section/div/time/span[2]'))
         return str(date.text.strip()).strip()
 
     def get_day_of_week(self, driver):
@@ -71,11 +74,8 @@ class WebScrape:
         return day_of_week.strip()
 
     def get_time_of_day(self, driver):
-        time_of_day = driver.find_element(By.CSS_SELECTOR,
-                                          '#il-web-app > div.book-container.book-container--luckydaylotto > '
-                                          'div.exc-container.exc-container__body.exc-container--with-bottom-margin.book'
-                                          '-container__content > div > section > div > time > '
-                                          'span.dbg-result-details__draw-phase')
+        time_of_day = driver(By.XPATH,
+                             '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[4]')
         return str(time_of_day.text.strip()).strip()
 
     def get_first(self, driver):
