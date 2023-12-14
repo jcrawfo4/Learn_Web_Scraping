@@ -9,8 +9,8 @@ import undetected_chromedriver as uc
 class WebScrapeForWinners:
     def __init__(self):
         self.table_name = "winners"
-        self.driver = uc.Chrome(headless=True, use_subprocess=False)
-        self.wait = WebDriverWait(self.driver, 8)
+        self.driver = uc.Chrome( use_subprocess=True)
+        self.wait = WebDriverWait(self.driver, 2)
 
     def create_table(self):
         connection = sqlite3.connect(self.table_name, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
@@ -33,7 +33,7 @@ class WebScrapeForWinners:
                                      detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         cursor = connection.cursor()
 
-        for page in range(14325, 14335):
+        for page in range(14330, 14344):
             print("page: ", page)
             self.driver.get(f"https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}")
 
@@ -60,7 +60,7 @@ class WebScrapeForWinners:
 
             cursor.executemany(sql, param_list)
             connection.commit()
-            connection.close()
+            #connection.close()
 
     def print_win_related(self, page, date, winner, jackpot):
         print("page: ", page, "date: ", str(date), "winner? : ", str(winner), "jackpot ", str(jackpot))

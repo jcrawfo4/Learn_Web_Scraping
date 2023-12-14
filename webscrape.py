@@ -10,13 +10,13 @@ from selenium.webdriver.common.by import By
 class WebScrape:
 
     def __init__(self):
-        self.driver = Chrome(headless=True, use_subprocess=True)
+        self.driver = Chrome(use_subprocess=True)
         self.table_name = 'lotto_numbers'
         self.wait = WebDriverWait(self.driver, 8)
 
     def daily_scrape(self):
 
-        for page in range(14325, 14326):
+        for page in range(14326, 14344):
             try:
                 table_name = 'lotto_numbers'
                 connection = sqlite3.connect(table_name, timeout=10,
@@ -24,9 +24,9 @@ class WebScrape:
                 cursor = connection.cursor()
                 # page = self.get_last_page()
                 time.sleep(random.randint(0, 3))
-                url = 'https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}'
+                url = f'https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}'
                 self.driver.get(url)
-                date = self.get_date()
+                date = self.get_date(self.driver)
                 day_of_week = self.get_day_of_week(self.driver)
                 time_of_day = self.get_time_of_day(self.driver)
                 first = self.get_first(self.driver)
@@ -34,7 +34,7 @@ class WebScrape:
                 third = self.get_third(self.driver)
                 fourth = self.get_fourth(self.driver)
                 fifth = self.get_fifth(self.driver)
-                sql = '''INSERT INTO {table_name} ('page', 'date', 'day_of_week', 'time_of_day', 'first', 'second',
+                sql = f'''INSERT INTO {table_name} ('page', 'date', 'day_of_week', 'time_of_day', 'first', 'second',
                 'third', 'fourth', 'fifth') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'''
                 param_list = [(page, date, day_of_week, time_of_day, first, second, third, fourth, fifth)]
                 cursor.executemany(sql, param_list)
@@ -63,19 +63,18 @@ class WebScrape:
         except sqlite3.OperationalError:
             print("OperationalError page not found")
 
-    def get_date(self) -> str:
-        date = self.wait.until(self.driver.find_element(By.XPATH, '//*[@id="il-web-app"]/div[2]/div['
-                                                                  '2]/div/section/div/time/span[2]'))
+    def get_date(self, d) -> str:
+        date = d.find_element(By.XPATH, '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[2]')
         return str(date.text.strip()).strip()
 
-    def get_day_of_week(self, driver):
-        day_of_week = driver.find_element(By.XPATH, '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[1]')
+    def get_day_of_week(self, d):
+        day_of_week = d.find_element(By.XPATH, '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[1]')
         day_of_week = str(day_of_week.text.strip())[0:-1]
         return day_of_week.strip()
 
-    def get_time_of_day(self, driver):
-        time_of_day = driver(By.XPATH,
-                             '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[4]')
+    def get_time_of_day(self, d):
+        time_of_day = d.find_element(By.XPATH,
+                                     '//*[@id="il-web-app"]/div[2]/div[2]/div/section/div/time/span[4]')
         return str(time_of_day.text.strip()).strip()
 
     def get_first(self, driver):
