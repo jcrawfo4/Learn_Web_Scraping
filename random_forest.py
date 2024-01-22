@@ -28,7 +28,7 @@ class RandomForestClass:
         rf_classifier.fit(X_5.values, fifth)
         input_to_guess = [1, 14, 23, 32]
         result = rf_classifier.predict(np.array(input_to_guess).reshape((1, -1)))[0]
-        time.sleep(9)
+        time.sleep(3)
         return result
 
     def predict_fourth(self):

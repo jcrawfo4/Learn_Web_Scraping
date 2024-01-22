@@ -1,10 +1,10 @@
 import random
 import sqlite3
 import time
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from undetected_chromedriver import Chrome, ChromeOptions
+
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from undetected_chromedriver import Chrome
 
 
 class WebScrape:
@@ -16,7 +16,7 @@ class WebScrape:
 
     def daily_scrape(self):
 
-        for page in range(14326, 14344):
+        for page in range(14344, 14655):
             try:
                 table_name = 'lotto_numbers'
                 connection = sqlite3.connect(table_name, timeout=10,

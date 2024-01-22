@@ -33,7 +33,7 @@ class WebScrapeForWinners:
                                      detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         cursor = connection.cursor()
 
-        for page in range(14330, 14344):
+        for page in range(14349, 16666):
             print("page: ", page)
             self.driver.get(f"https://www.illinoislottery.com/dbg/results/luckydaylotto/draw/{page}")
 
